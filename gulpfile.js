@@ -36,9 +36,8 @@ const uglify = require('gulp-uglify');
     5. js es6转es5  gulp-babel
     依赖两个包:
     $  npm i -D @babel/core
-    $  npm i -D @babel/preset-env
     $  npm i -D babel-preset-es2015
-    $  npm i -D gulp-babel@7
+    $  npm i -D gulp-babel
  */
 const babel = require('gulp-babel');
 
@@ -75,19 +74,12 @@ const webserver = require('gulp-webserver');
  */
 const fileInclude = require('gulp-file-include');
 
-
-
 /**
     11. gulp-rev
  */
 const rename = require('gulp-rename');
 const rev = require('gulp-rev');
 const revCollector = require('gulp-rev-collector');
-
-
-
-
-
 
 // gulp@4 写法
 // css打包任务
