@@ -88,9 +88,11 @@ const cssHandler = function cssHandler() {
     .src('./src/css/*.css')           // 1.找到内容
     .pipe(autoprefixer())             // 2.自动添加前缀
     .pipe(cssmin())                   // 3.压缩
-    .pipe(gulp.dest('./dist/css/'))  // 4.放到指定目录
+    .pipe(rev())                      // 5.添加版本号
     .pipe(rename({ suffix: '.min' }))
-    .pipe(rev())
+    .pipe(gulp.dest('./dist/css/'))  // 4.放到指定目录
+    .pipe(rev.manifest())
+    .pipe(gulp.dest('./rev/css/'))
 };
 // sass打包任务
 const sassHandler = function sassHandler() {
@@ -99,9 +101,11 @@ const sassHandler = function sassHandler() {
     .pipe(sass())                     // 2. 转换成css
     .pipe(autoprefixer())             // 3.自动添加前缀
     .pipe(cssmin())                   // 4.压缩
-    .pipe(gulp.dest('./dist/sass/')) // 5.放到指定目录
+    .pipe(rev())                      // 5.添加版本号
     .pipe(rename({ suffix: '.min' }))
-    .pipe(rev())
+    .pipe(gulp.dest('./dist/sass/'))  // 5.放到指定目录
+    .pipe(rev.manifest())
+    .pipe(gulp.dest('./rev/sass/'))
 };
 
 // 打包js文件的任务
@@ -114,15 +118,26 @@ const jsHandler = function jsHandler() {
       })
     )                                 // 2. es6转换es5
     .pipe(uglify())                   // 3.压缩
-    .pipe(gulp.dest('./dist/js/'))   // 4. 放到指定目录
+    .pipe(rev())                      // 5.添加版本号
     .pipe(rename({ suffix: '.min' }))
-    .pipe(rev())
+    .pipe(gulp.dest('./dist/js/'))   // 4. 放到指定目录
+    .pipe(rev.manifest())
+    .pipe(gulp.dest('./rev/js/'))
+};
+
+// 打包images文件的任务
+const imgHandler = function () {
+  return gulp
+    .src('./src/images/**/*')
+    .pipe(imagemin({ optimizationLevel: 5, progressive: true, interlaced: true }))
+    .pipe(gulp.dest('./dist/images/'));
 };
 
 // 打包html任务
 const htmlHandler = function () {
   return gulp
-    .src('./src/pages/*.html')
+    .src(['./rev/**/*.json', './src/**/*.html'])
+    .pipe(revCollector())
     .pipe(
       fileInclude({
         // 根据配置导入对应的html片段
@@ -132,7 +147,7 @@ const htmlHandler = function () {
     )
     .pipe(
       htmlmin({
-        // collapseWhitespace: true, // 移除空格
+        collapseWhitespace: true, // 移除空格
         removeEmptyAttributes: true, // 移除空属性（仅限原生）
         collapseBooleanAttributes: true, // 移除 checked 类似的布尔值
         removeAttributeQuotes: true, // 移除属性上的双引号
@@ -142,19 +157,12 @@ const htmlHandler = function () {
         removeScriptTypeAttributes: true, // 移除 script 上的 type 属性
       })
     )
-    .pipe(gulp.dest('./dist/pages/'));
-};
-// 打包images文件的任务
-const imgHandler = function () {
-  return gulp
-    .src('./src/images/**/*')
-    .pipe(imagemin({ optimizationLevel: 5, progressive: true, interlaced: true }))
-    .pipe(gulp.dest('./dist/images/'));
+    .pipe(gulp.dest('./dist/'));
 };
 
 // 默认先删除dist文件夹
 const delHandler = function () {
-  return del(['./dist/']);
+  return del(['./dist/', './rev/']);
 };
 
 // 配置启动服务器任务
@@ -170,14 +178,7 @@ const webHandler = function () {
       host: 'localhost', // 域名(可以配置自定义域名)
       port: '8080', // 端口号
       livereload: true, // 当文件修改的时候是否刷新页面
-      open: './pages/index.html', // 默认打开哪一个文件（从dist 目录以后的目录开始书写）
-      // proxies: [   // 配置所有代理
-      //     // 每一个代理就是一个对象数据类型
-      //     {
-      //         source: '',  // 代理标识符
-      //         target: '',  // 代理目标地址
-      //     }
-      // ]
+      open: './index.html', // 默认打开哪一个文件（从dist 目录以后的目录开始书写）
     })
   );
 };
@@ -185,12 +186,15 @@ const webHandler = function () {
 // 创建一个监控任务
 const watchHandler = function () {
   //使用 gulp.watch
-  gulp.watch('./src/sass/*.scss', sassHandler);
   gulp.watch('./src/css/*.css', cssHandler);
-  gulp.watch('./src/pages/*.html', htmlHandler);
+  gulp.watch('./src/sass/*.scss', sassHandler);
+  gulp.watch('./src/js/*.js', jsHandler);
+  gulp.watch('./src/images/*.html', imgHandler);
+  gulp.watch('./src/**/*.html', htmlHandler);
 };
 
 module.exports = {
+  server: webHandler,
   cssHandler: cssHandler,
   sassHandler: sassHandler,
   jsHandler: jsHandler,
@@ -216,4 +220,11 @@ module.exports.default = gulp.series(
   webHandler,
   // 监听事件
   watchHandler
+);
+
+module.exports.build = gulp.series(
+  // 先 删除 之前打包压缩内容
+  delHandler,
+  // 在 执行 新的打包压缩 让压缩文件内容和当前源文件内容同步
+  gulp.parallel(cssHandler, sassHandler, jsHandler, htmlHandler, imgHandler),
 );
