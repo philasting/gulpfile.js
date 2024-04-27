@@ -85,44 +85,44 @@ const revCollector = require('gulp-rev-collector');
 // css打包任务
 const cssHandler = function cssHandler() {
   return gulp
-    .src('./src/css/*.css')           // 1.找到内容
-    .pipe(autoprefixer())             // 2.自动添加前缀
-    .pipe(cssmin())                   // 3.压缩
-    .pipe(rev())                      // 5.添加版本号
+    .src('./src/css/*.css') // 找到内容
+    .pipe(autoprefixer()) // 自动添加前缀
+    .pipe(cssmin()) // 压缩
+    .pipe(rev()) // 添加版本号
     .pipe(rename({ suffix: '.min' }))
-    .pipe(gulp.dest('./dist/css/'))  // 4.放到指定目录
+    .pipe(gulp.dest('./dist/css/')) // 放到指定目录
     .pipe(rev.manifest())
-    .pipe(gulp.dest('./rev/css/'))
+    .pipe(gulp.dest('./rev'));
 };
 // sass打包任务
 const sassHandler = function sassHandler() {
   return gulp
-    .src('./src/sass/*.scss')         // 1.找到内容
-    .pipe(sass())                     // 2. 转换成css
-    .pipe(autoprefixer())             // 3.自动添加前缀
-    .pipe(cssmin())                   // 4.压缩
-    .pipe(rev())                      // 5.添加版本号
+    .src('./src/sass/*.scss') // 找到内容
+    .pipe(sass()) // 转换成css
+    .pipe(autoprefixer()) // 自动添加前缀
+    .pipe(cssmin()) // 压缩
+    .pipe(rev()) // 添加版本号
     .pipe(rename({ suffix: '.min' }))
-    .pipe(gulp.dest('./dist/sass/'))  // 5.放到指定目录
+    .pipe(gulp.dest('./dist/sass/')) // 放到指定目录
     .pipe(rev.manifest())
-    .pipe(gulp.dest('./rev/sass/'))
+    .pipe(gulp.dest('./rev'));
 };
 
 // 打包js文件的任务
 const jsHandler = function jsHandler() {
   return gulp
-    .src('./src/js/*.js')             // 1. 找到js文件
+    .src('./src/js/*.js') // 找到js文件
     .pipe(
       babel({
-        presets: ["es2015"],
+        presets: ['es2015'],
       })
-    )                                 // 2. es6转换es5
-    .pipe(uglify())                   // 3.压缩
-    .pipe(rev())                      // 5.添加版本号
+    ) // es6转换es5
+    .pipe(uglify()) // 压缩
+    .pipe(rev()) // 添加版本号
     .pipe(rename({ suffix: '.min' }))
-    .pipe(gulp.dest('./dist/js/'))   // 4. 放到指定目录
+    .pipe(gulp.dest('./dist/js/')) // 放到指定目录
     .pipe(rev.manifest())
-    .pipe(gulp.dest('./rev/js/'))
+    .pipe(gulp.dest('./rev'));
 };
 
 // 打包images文件的任务
@@ -136,8 +136,7 @@ const imgHandler = function () {
 // 打包html任务
 const htmlHandler = function () {
   return gulp
-    .src(['./rev/**/*.json', './src/**/*.html'])
-    .pipe(revCollector())
+    .src(['./rev/*.json', './src/**/*.html'])
     .pipe(
       fileInclude({
         // 根据配置导入对应的html片段
@@ -157,7 +156,8 @@ const htmlHandler = function () {
         removeScriptTypeAttributes: true, // 移除 script 上的 type 属性
       })
     )
-    .pipe(gulp.dest('./dist/'));
+    .pipe(gulp.dest('./dist/'))
+    .pipe(revCollector({ replaceReved: true }))
 };
 
 // 默认先删除dist文件夹
@@ -226,5 +226,5 @@ module.exports.build = gulp.series(
   // 先 删除 之前打包压缩内容
   delHandler,
   // 在 执行 新的打包压缩 让压缩文件内容和当前源文件内容同步
-  gulp.parallel(cssHandler, sassHandler, jsHandler, htmlHandler, imgHandler),
+  gulp.parallel(cssHandler, sassHandler, jsHandler, htmlHandler, imgHandler)
 );
