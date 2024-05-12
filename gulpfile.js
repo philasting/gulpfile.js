@@ -74,55 +74,36 @@ const webserver = require('gulp-webserver');
  */
 const fileInclude = require('gulp-file-include');
 
-/**
-    11. gulp-rev
- */
-const rename = require('gulp-rename');
-const rev = require('gulp-rev');
-const revCollector = require('gulp-rev-collector');
-
 // gulp@4 写法
 // css打包任务
 const cssHandler = function cssHandler() {
   return gulp
-    .src('./src/css/*.css') // 找到内容
+    .src('src/css/*.css') // 找到内容
     .pipe(autoprefixer()) // 自动添加前缀
     .pipe(cssmin()) // 压缩
-    .pipe(rev()) // 添加版本号
-    .pipe(rename({ suffix: '.min' }))
-    .pipe(gulp.dest('./dist/css/')) // 放到指定目录
-    .pipe(rev.manifest())
-    .pipe(gulp.dest('./rev'));
+    .pipe(gulp.dest('dist/css/')) // 放到指定目录
 };
 // sass打包任务
 const sassHandler = function sassHandler() {
   return gulp
-    .src('./src/sass/*.scss') // 找到内容
+    .src('src/sass/*.scss') // 找到内容
     .pipe(sass()) // 转换成css
     .pipe(autoprefixer()) // 自动添加前缀
     .pipe(cssmin()) // 压缩
-    .pipe(rev()) // 添加版本号
-    .pipe(rename({ suffix: '.min' }))
-    .pipe(gulp.dest('./dist/sass/')) // 放到指定目录
-    .pipe(rev.manifest())
-    .pipe(gulp.dest('./rev'));
+    .pipe(gulp.dest('.dist/sass/')) // 放到指定目录
 };
 
 // 打包js文件的任务
 const jsHandler = function jsHandler() {
   return gulp
-    .src('./src/js/*.js') // 找到js文件
+    .src('src/js/*.js') // 找到js文件
     .pipe(
       babel({
         presets: ['es2015'],
       })
     ) // es6转换es5
     .pipe(uglify()) // 压缩
-    .pipe(rev()) // 添加版本号
-    .pipe(rename({ suffix: '.min' }))
-    .pipe(gulp.dest('./dist/js/')) // 放到指定目录
-    .pipe(rev.manifest())
-    .pipe(gulp.dest('./rev'));
+    .pipe(gulp.dest('dist/js/')) // 放到指定目录
 };
 
 // 打包images文件的任务
@@ -136,12 +117,12 @@ const imgHandler = function () {
 // 打包html任务
 const htmlHandler = function () {
   return gulp
-    .src(['./rev/*.json', './src/**/*.html'])
+    .src('src/**/*.html')
     .pipe(
       fileInclude({
         // 根据配置导入对应的html片段
         prefix: '@-@', // 自定义标识符
-        basepath: './src/components', // 基准目录，组件文件都在哪一个目录里面
+        basepath: 'src/components', // 基准目录，组件文件都在哪一个目录里面
       })
     )
     .pipe(
@@ -156,13 +137,12 @@ const htmlHandler = function () {
         removeScriptTypeAttributes: true, // 移除 script 上的 type 属性
       })
     )
-    .pipe(gulp.dest('./dist/'))
-    .pipe(revCollector({ replaceReved: true }))
+    .pipe(gulp.dest('dist/'));
 };
 
 // 默认先删除dist文件夹
 const delHandler = function () {
-  return del(['./dist/', './rev/']);
+  return del(['dist']);
 };
 
 // 配置启动服务器任务
